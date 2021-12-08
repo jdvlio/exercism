@@ -12,4 +12,4 @@ Here, I cross off exercises as I complete them:
 - Rust:
 	- [X] lucians-luscious-lasagna [functions]
 	- [ ] semi-structured-logs [enums]
-	- [ ] assembly-line [integers and floats ]
+	- [X] assembly-line [integers and floats ]
