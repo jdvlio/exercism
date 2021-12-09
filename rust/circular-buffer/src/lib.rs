@@ -13,10 +13,15 @@ pub enum Error {
 impl<T: Clone> CircularBuffer<T> {
     pub fn new(capacity: usize) -> Self {
         /* a CircularBuffer constructor */
-        return Self {
+        let mut ring_buffer = CircularBuffer {
             data: Vec::new(),
             len: capacity,
-        }
+        };
+
+        /* reserve space for elements */
+        ring_buffer.data.reserve(capacity);
+
+        return ring_buffer
     }
 
     pub fn write(&mut self, _element: T) -> Result<(), Error> {
@@ -38,7 +43,7 @@ impl<T: Clone> CircularBuffer<T> {
          */
         match self.data.first().cloned() {
             None => Err(Error::EmptyBuffer),
-            Some(t) => Ok(t),
+            Some(t) => Ok(self.data.remove(0)),
         }
     }
 
