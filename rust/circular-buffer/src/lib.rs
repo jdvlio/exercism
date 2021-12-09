@@ -10,6 +10,12 @@ pub enum Error {
     FullBuffer,
 }
 
+/*
+ * In our implementation of the ring buffer below,
+ * the oldest elements appear at the beginning of
+ * the 'data' vector.
+ */
+
 impl<T: Clone> CircularBuffer<T> {
     pub fn new(capacity: usize) -> Self {
         /* a CircularBuffer constructor */
@@ -43,16 +49,22 @@ impl<T: Clone> CircularBuffer<T> {
          */
         match self.data.first().cloned() {
             None => Err(Error::EmptyBuffer),
-            Some(t) => Ok(self.data.remove(0)),
+            Some(_) => Ok(self.data.remove(0)),
         }
     }
 
     pub fn clear(&mut self) {
-        // unimplemented!("Clear the CircularBuffer.");
         self.data.clear()
     }
 
     pub fn overwrite(&mut self, _element: T) {
-        unimplemented!("Write the passed element to the CircularBuffer, overwriting the existing elements if CircularBuffer is full.");
+
+        /* Remove oldest element if buffer is full */
+        if self.data.len() == self.len {
+            self.data.remove(0);
+        }
+
+        /* add new element */
+        self.data.push(_element);
     }
 }
