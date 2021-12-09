@@ -43,7 +43,8 @@ impl<T: Clone> CircularBuffer<T> {
     }
 
     pub fn clear(&mut self) {
-        unimplemented!("Clear the CircularBuffer.");
+        // unimplemented!("Clear the CircularBuffer.");
+        self.data.clear()
     }
 
     pub fn overwrite(&mut self, _element: T) {
