@@ -12,7 +12,7 @@ pub enum Error {
 
 impl<T: Clone> CircularBuffer<T> {
     pub fn new(capacity: usize) -> Self {
-        // a CircularBuffer constructor
+        /* a CircularBuffer constructor */
         return Self {
             data: Vec::new(),
             len: capacity,
@@ -20,7 +20,15 @@ impl<T: Clone> CircularBuffer<T> {
     }
 
     pub fn write(&mut self, _element: T) -> Result<(), Error> {
-        unimplemented!("Write the passed element to the CircularBuffer or return FullBuffer error if CircularBuffer is full.");
+        /* Write the passed element to the CircularBuffer
+         * Otherwise raise FullBuffer error */
+        if self.data.len() == self.len {
+            return Err(Error::FullBuffer)
+        }
+        else {
+            self.data.push(_element);
+            return Ok(())
+        }
     }
 
     pub fn read(&mut self) -> Result<T, Error> {
