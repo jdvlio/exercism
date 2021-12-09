@@ -12,13 +12,11 @@ pub enum Error {
 
 impl<T: Clone> CircularBuffer<T> {
     pub fn new(capacity: usize) -> Self {
-
-        let result = Self {
+        // a CircularBuffer constructor
+        return Self {
             data: Vec::new(),
             len: capacity,
-        };
-
-        return result
+        }
     }
 
     pub fn write(&mut self, _element: T) -> Result<(), Error> {
@@ -26,17 +24,13 @@ impl<T: Clone> CircularBuffer<T> {
     }
 
     pub fn read(&mut self) -> Result<T, Error> {
-        // unimplemented!("Read the oldest element from the CircularBuffer or return EmptyBuffer error if CircularBuffer is empty.");
-
-        if self.data.is_empty() {
-            return Err(Error::EmptyBuffer)
-        }
-        else
-        {
-            match self.data.first().cloned() {
-                None => Err(Error::EmptyBuffer),
-                Some(t) => Ok(t),
-            }
+        /*
+         * Raise error if buffer is empty
+         * Otherwise return oldest value
+         */
+        match self.data.first().cloned() {
+            None => Err(Error::EmptyBuffer),
+            Some(t) => Ok(t),
         }
     }
 
