@@ -1,5 +1,5 @@
 
-.PHONY: test help clean
+.PHONY: test help clean bench
 .SUFFIXES: .md .pdf
 
 test:
@@ -13,3 +13,6 @@ help: HELP.pdf README.pdf
 clean:
 	cargo clean
 	rm -f *.pdf
+
+bench:
+	cargo bench
