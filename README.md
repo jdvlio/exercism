@@ -11,7 +11,8 @@ Here, I cross off exercises as I complete them:
 
 - Rust:
 	- practice:
-		- [X] circular buffer
+		* [X] circular buffer
+		* [ ] parallel letter frequency
 	- concepts:
 		* [X] lucians luscious lasagna [functions]
 		* [ ] semi structured logs [enums]
