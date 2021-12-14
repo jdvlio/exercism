@@ -1,79 +1,108 @@
 
+use std::cmp;
 use std::collections::HashMap;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 use std::thread;
 
+/* a reasonable threshold */
+const MAX_THREADS: usize = 16;
+
+/*
+ * A function that instantiates hash maps for the
+ * counting of characters occurences, given a string.
+ */
+fn counter(string: &str, mut hash: HashMap<char,usize>) -> HashMap<char,usize> {
+    for c in string.chars() {
+        if c.is_alphabetic() {
+            let mult = hash.entry(c).or_insert(0);
+            *mult += 1
+        }
+    }
+
+    return hash
+}
 
 pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
 
-    /* 'n Dom vraag kry 'n dom antwoord ^^ */
-    if input.is_empty() || worker_count <= 0 {
-        panic!("bsdchad's disappointment");
-    }
+    /* No need to be wasteful */
+    let worker_count = cmp::min(MAX_THREADS, worker_count);
 
-    /* Spawn a channel */
-    let (tx,rx) = mpsc::channel();
-
-    let slice = input.concat();
-
-    /* Divide input slice into (almost) equally sized chunks */
-    let mut chunk_size = slice.len() / &worker_count;
-    let rem = slice.len() % &worker_count;
+    let mut strings: Vec<String> = Vec::with_capacity(worker_count);
+    let mut handles = Vec::with_capacity(worker_count);
 
     /*
-     * Adjustment if the worker count
-     * does not divide the slice length
+     * Move from a slice to a vector.  Note
+     * that, since new threads can outlive the
+     * references in the signature, we clone the
+     * relevant strings outright.
      */
-    if 0 < rem {
-        chunk_size +=1
+    for line in input.iter() {
+        let string = line.to_string().to_lowercase();
+        strings.push(string);
     }
 
-    for i in 1..worker_count {
+
+    /* output channels */
+    let (tx, rx) = mpsc::channel();
 
 
-        thread::spawn( move || {
+    let mut job: Vec<Vec<String>> = Vec::with_capacity(worker_count);
+    for _ in 0..worker_count {
+        job.push(Vec::new());
+    }
 
-            let mut slice_mut = match i {
-                1 => slice.clone(),
-                _  => right.to_string(),
-            };
+    let mut count = 0;
 
-            /* Split string slices in two */
-            let (left,right) = slice.split_at(chunk_size.min(slice.len()));
+    /* Assign jobs in a round-robin fashion */
+    for item in strings.iter() {
 
-            /*
-             * Keys are 'letters' and values are
-             * are their corresponding multiplicity
-             */
-            let mut map = HashMap::new();
+        job[count].push(item.to_string());
+        count = (count + 1) % worker_count;
+    }
 
-            /* construct the entries of the hash map */
-            for character in left.chars() {
-                let mult = map.entry(character).or_insert(0);
-                *mult += 1;
+    /*
+     * I want to share this vector
+     * across threads
+     */
+    let job_arc = Arc::new(job);
+
+    for count in 0..worker_count {
+
+        let tx = mpsc::Sender::clone(&tx);
+        let job = Arc::clone(&job_arc);
+
+        handles.push(thread::spawn( move || {
+            let mut hash = HashMap::new();
+
+            for string in job[count].iter() {
+                hash = counter(string, hash)
             }
 
-            /* clone the channel transmitter */
-            // let tx = mpsc::Sender::clone(&tx);
-            let worker_tx = &tx.clone();
-
-            let drain = map.drain();
-
-            for msg in drain {
-                worker_tx.send(msg);
-            }
-
-        });
+            tx.send(hash).unwrap();
+        }));
     }
 
     drop(tx);
 
-    let mut result = HashMap::new();
-
-    for (k,v) in rx {
-        let mult = result.entry(k).or_insert(0);
-        *mult += v;
+    /* Join all thread handles */
+    for _ in 1..worker_count {
+        let handle = handles.pop().unwrap();
+        handle.join().unwrap();
     }
 
-    return result;
+    let mut result = HashMap::new();
+
+    while let Ok(mut hash) = rx.recv() {
+
+        /*
+         * Aggregate all the key-value pairs into
+         * one hash map.
+         */
+       for (k,v) in hash.drain() {
+           let mult = result.entry(k).or_insert(0);
+           *mult += v;
+       }
+    }
+
+    return result
 }
